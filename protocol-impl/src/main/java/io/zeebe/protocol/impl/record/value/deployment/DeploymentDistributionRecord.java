@@ -9,8 +9,10 @@ package io.zeebe.protocol.impl.record.value.deployment;
 
 import io.zeebe.msgpack.property.IntegerProperty;
 import io.zeebe.protocol.impl.record.UnifiedRecordValue;
+import io.zeebe.protocol.record.value.DeploymentDistributionRecordValue;
 
-public class DeploymentDistributionRecord extends UnifiedRecordValue {
+public class DeploymentDistributionRecord extends UnifiedRecordValue
+    implements DeploymentDistributionRecordValue {
 
   private final IntegerProperty partitionProperty = new IntegerProperty("partition");
 

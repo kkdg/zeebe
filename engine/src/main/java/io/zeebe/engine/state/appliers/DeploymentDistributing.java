@@ -11,10 +11,10 @@ import io.zeebe.engine.state.TypedEventApplier;
 import io.zeebe.engine.state.ZeebeState;
 import io.zeebe.engine.state.mutable.MutableDeploymentState;
 import io.zeebe.protocol.impl.record.value.deployment.DeploymentDistributionRecord;
-import io.zeebe.protocol.record.intent.DeploymentIntent;
+import io.zeebe.protocol.record.intent.DeploymentDistributionIntent;
 
 public class DeploymentDistributing
-    implements TypedEventApplier<DeploymentIntent, DeploymentDistributionRecord> {
+    implements TypedEventApplier<DeploymentDistributionIntent, DeploymentDistributionRecord> {
 
   private final MutableDeploymentState deploymentState;
 

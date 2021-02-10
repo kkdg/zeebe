@@ -36,6 +36,7 @@ import io.zeebe.protocol.impl.record.value.deployment.DeploymentDistributionReco
 import io.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.zeebe.protocol.impl.record.value.deployment.WorkflowRecord;
 import io.zeebe.protocol.record.RejectionType;
+import io.zeebe.protocol.record.intent.DeploymentDistributionIntent;
 import io.zeebe.protocol.record.intent.DeploymentIntent;
 import io.zeebe.util.Either;
 import java.util.Collections;
@@ -121,7 +122,7 @@ public final class TransformingDeploymentCreateProcessor
           partitionId -> {
             deploymentDistributionRecord.setPartition(partitionId);
             stateWriter.appendFollowUpEvent(
-                key, DeploymentIntent.DISTRIBUTING, deploymentDistributionRecord);
+                key, DeploymentDistributionIntent.DISTRIBUTING, deploymentDistributionRecord);
             // todo(zell): push deployment to other partition
             //            deploymentDistributor.pushDeployment(key, partitionId, deploymentEvent);
           });
