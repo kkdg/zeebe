@@ -77,7 +77,8 @@ public final class TransformingDeploymentCreateProcessorTest {
               zeebeState,
               new CatchEventBehavior(
                   zeebeState, expressionProcessor, mockSubscriptionCommandSender, 1),
-              expressionProcessor);
+              expressionProcessor,
+              1);
           return typedRecordProcessors;
         });
   }

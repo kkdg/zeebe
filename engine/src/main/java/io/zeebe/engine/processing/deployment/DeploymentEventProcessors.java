@@ -33,10 +33,11 @@ public final class DeploymentEventProcessors {
       final TypedRecordProcessors typedRecordProcessors,
       final ZeebeState zeebeState,
       final CatchEventBehavior catchEventBehavior,
-      final ExpressionProcessor expressionProcessor) {
+      final ExpressionProcessor expressionProcessor,
+      final int partitionsCount) {
     final var processor =
         new TransformingDeploymentCreateProcessor(
-            zeebeState, catchEventBehavior, expressionProcessor);
+            zeebeState, catchEventBehavior, expressionProcessor, partitionsCount);
     typedRecordProcessors.onCommand(ValueType.DEPLOYMENT, CREATE, processor);
   }
 }

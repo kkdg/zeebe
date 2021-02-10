@@ -19,7 +19,8 @@ public enum DeploymentIntent implements Intent {
   CREATE((short) 0),
   CREATED((short) 1),
   DISTRIBUTE((short) 2),
-  DISTRIBUTED((short) 3);
+  DISTRIBUTED((short) 3),
+  DISTRIBUTING((short) 4);
 
   private final short value;
 

@@ -31,6 +31,8 @@ import io.zeebe.engine.state.instance.TimerInstance;
 import io.zeebe.engine.state.mutable.MutableEventScopeInstanceState;
 import io.zeebe.engine.state.mutable.MutableWorkflowState;
 import io.zeebe.model.bpmn.util.time.Timer;
+import io.zeebe.protocol.Protocol;
+import io.zeebe.protocol.impl.record.value.deployment.DeploymentDistributionRecord;
 import io.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.zeebe.protocol.impl.record.value.deployment.WorkflowRecord;
 import io.zeebe.protocol.record.RejectionType;
@@ -39,6 +41,8 @@ import io.zeebe.util.Either;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.agrona.DirectBuffer;
 
 public final class TransformingDeploymentCreateProcessor
@@ -53,15 +57,18 @@ public final class TransformingDeploymentCreateProcessor
   private final CatchEventBehavior catchEventBehavior;
   private final KeyGenerator keyGenerator;
   private final ExpressionProcessor expressionProcessor;
-  private final EventAppliers eventAppliers;
   private final TypedStreamWriterProxy typedStreamWriterProxy;
   private final StateWriter stateWriter;
+  private final List<Integer> partitions;
+  private final DeploymentDistributionRecord deploymentDistributionRecord;
+  //  private final DeploymentDistributor deploymentDistributor;
 
   public TransformingDeploymentCreateProcessor(
       final ZeebeState zeebeState,
       final CatchEventBehavior catchEventBehavior,
-      final ExpressionProcessor expressionProcessor) {
-    eventAppliers = new EventAppliers(zeebeState);
+      final ExpressionProcessor expressionProcessor,
+      final int partitionsCount) {
+    final EventAppliers eventAppliers = new EventAppliers(zeebeState);
     workflowState = zeebeState.getWorkflowState();
     eventScopeInstanceState = zeebeState.getEventScopeInstanceState();
     timerInstanceState = zeebeState.getTimerState();
@@ -71,6 +78,17 @@ public final class TransformingDeploymentCreateProcessor
     deploymentTransformer = new DeploymentTransformer(stateWriter, zeebeState, expressionProcessor);
     this.catchEventBehavior = catchEventBehavior;
     this.expressionProcessor = expressionProcessor;
+
+    // partitions
+    if (partitionsCount > Protocol.DEPLOYMENT_PARTITION) {
+      partitions =
+          IntStream.range(Protocol.DEPLOYMENT_PARTITION + 1, partitionsCount + 1)
+              .boxed()
+              .collect(Collectors.toList());
+    } else {
+      partitions = List.of();
+    }
+    deploymentDistributionRecord = new DeploymentDistributionRecord();
   }
 
   @Override
@@ -98,6 +116,15 @@ public final class TransformingDeploymentCreateProcessor
 
       responseWriter.writeEventOnCommand(key, DeploymentIntent.CREATED, deploymentEvent, command);
       streamWriter.appendFollowUpEvent(key, DeploymentIntent.CREATED, deploymentEvent);
+
+      partitions.forEach(
+          partitionId -> {
+            deploymentDistributionRecord.setPartition(partitionId);
+            stateWriter.appendFollowUpEvent(
+                key, DeploymentIntent.DISTRIBUTING, deploymentDistributionRecord);
+            // todo(zell): push deployment to other partition
+            //            deploymentDistributor.pushDeployment(key, partitionId, deploymentEvent);
+          });
     } else {
       responseWriter.writeRejectionOnCommand(
           command,
