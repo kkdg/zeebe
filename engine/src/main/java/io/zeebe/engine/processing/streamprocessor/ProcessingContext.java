@@ -12,9 +12,8 @@ import io.zeebe.engine.processing.streamprocessor.writers.CommandResponseWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.EventApplyingStateWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.NoopTypedStreamWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.StateWriter;
-import io.zeebe.engine.processing.streamprocessor.writers.TypedCommandWriter;
-import io.zeebe.engine.processing.streamprocessor.writers.TypedRejectionWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.TypedStreamWriter;
+import io.zeebe.engine.processing.streamprocessor.writers.Writers;
 import io.zeebe.engine.state.EventApplier;
 import io.zeebe.engine.state.ZeebeState;
 import io.zeebe.logstreams.log.LogStream;
@@ -42,6 +41,7 @@ public final class ProcessingContext implements ReadonlyProcessingContext {
   private Consumer<TypedRecord> onProcessedListener = record -> {};
   private int maxFragmentSize;
   private boolean detectReprocessingInconsistency;
+  private Writers writers;
 
   public ProcessingContext actor(final ActorControl actor) {
     this.actor = actor;
@@ -135,6 +135,16 @@ public final class ProcessingContext implements ReadonlyProcessingContext {
   }
 
   @Override
+  public Writers getWriters() {
+    if (writers == null) {
+      // lazy init, because statewriter depends on both logstreamWriter and eventApplier
+      final var stateWriter = new EventApplyingStateWriter(logStreamWriter, eventApplier);
+      writers = new Writers(logStreamWriter, stateWriter, commandResponseWriter);
+    }
+    return writers;
+  }
+
+  @Override
   public RecordValues getRecordValues() {
     return recordValues;
   }
@@ -155,11 +165,6 @@ public final class ProcessingContext implements ReadonlyProcessingContext {
   }
 
   @Override
-  public CommandResponseWriter getCommandResponseWriter() {
-    return commandResponseWriter;
-  }
-
-  @Override
   public BooleanSupplier getAbortCondition() {
     return abortCondition;
   }
@@ -167,25 +172,6 @@ public final class ProcessingContext implements ReadonlyProcessingContext {
   @Override
   public EventApplier getEventApplier() {
     return eventApplier;
-  }
-
-  @Override
-  public StateWriter getStateWriter() {
-    if (stateWriter == null) {
-      // lazy init, because depends on both logstreamWriter and eventApplier
-      stateWriter = new EventApplyingStateWriter(logStreamWriter, eventApplier);
-    }
-    return stateWriter;
-  }
-
-  @Override
-  public TypedCommandWriter getCommandWriter() {
-    return logStreamWriter;
-  }
-
-  @Override
-  public TypedRejectionWriter getRejectionWriter() {
-    return logStreamWriter;
   }
 
   public Consumer<TypedRecord> getOnProcessedListener() {

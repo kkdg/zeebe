@@ -82,7 +82,7 @@ public final class CreateWorkflowInstanceProcessorTest
 
     processor =
         new CreateWorkflowInstanceProcessor(
-            workflowState, elementInstanceState, variablesState, keyGenerator, stateWriter);
+            workflowState, elementInstanceState, variablesState, keyGenerator, writers);
   }
 
   @Test
