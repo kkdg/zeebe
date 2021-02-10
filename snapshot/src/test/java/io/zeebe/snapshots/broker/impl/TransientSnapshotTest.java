@@ -155,7 +155,7 @@ public class TransientSnapshotTest {
   }
 
   @Test
-  public void shouldFailToPersistWhenTakeDoesntWrote() {
+  public void shouldFailToPersistWhenTakeDoesnotWrite() {
     // given
     final var index = 1L;
     final var term = 0L;
@@ -164,8 +164,8 @@ public class TransientSnapshotTest {
     transientSnapshot.take(p -> true).join();
 
     // when - then
-    assertThatThrownBy(() -> transientSnapshot.persist().join()).isNotNull();
-    // .hasCauseInstanceOf(NoSuchFileException.class);
+    assertThatThrownBy(() -> transientSnapshot.persist().join())
+        .hasCauseInstanceOf(UncheckedIOException.class);
   }
 
   @Test

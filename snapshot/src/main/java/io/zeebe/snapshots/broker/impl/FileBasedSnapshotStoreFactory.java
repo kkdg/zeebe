@@ -58,11 +58,8 @@ public final class FileBasedSnapshotStoreFactory
       final String partitionName, final Path snapshotDirectory, final Path pendingDirectory) {
     final var snapshotStore =
         new FileBasedSnapshotStore(
-            new SnapshotMetrics(partitionName),
-            snapshotDirectory,
-            pendingDirectory,
-            actorScheduler);
-    snapshotStore.open();
+            new SnapshotMetrics(partitionName), snapshotDirectory, pendingDirectory);
+    actorScheduler.submitActor(snapshotStore).join();
     return snapshotStore;
   }
 

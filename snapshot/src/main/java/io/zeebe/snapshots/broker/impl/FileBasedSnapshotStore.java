@@ -18,7 +18,6 @@ import io.zeebe.snapshots.raft.ReceivedSnapshot;
 import io.zeebe.snapshots.raft.TransientSnapshot;
 import io.zeebe.util.FileUtil;
 import io.zeebe.util.sched.Actor;
-import io.zeebe.util.sched.ActorScheduler;
 import io.zeebe.util.sched.future.ActorFuture;
 import io.zeebe.util.sched.future.CompletableActorFuture;
 import java.io.IOException;
@@ -56,7 +55,6 @@ public final class FileBasedSnapshotStore extends Actor
   private final Set<PersistedSnapshotListener> listeners;
 
   private final SnapshotMetrics snapshotMetrics;
-  private final ActorScheduler actorScheduler;
 
   // Use AtomicReference so that getting latest snapshot doesn't have to go through the actor
   private final AtomicReference<FileBasedSnapshot> currentPersistedSnapshotRef;
@@ -67,23 +65,17 @@ public final class FileBasedSnapshotStore extends Actor
   public FileBasedSnapshotStore(
       final SnapshotMetrics snapshotMetrics,
       final Path snapshotsDirectory,
-      final Path pendingDirectory,
-      final ActorScheduler actorScheduler) {
+      final Path pendingDirectory) {
     this.snapshotsDirectory = snapshotsDirectory;
     this.pendingDirectory = pendingDirectory;
     this.snapshotMetrics = snapshotMetrics;
-    this.actorScheduler = actorScheduler;
     receivingSnapshotStartCount = new AtomicLong();
 
     listeners = new CopyOnWriteArraySet<>();
 
     // load previous snapshots
     currentPersistedSnapshotRef = new AtomicReference<>(loadLatestSnapshot(snapshotsDirectory));
-    purgePendingSnapshotsDirectoryOnStartup();
-  }
-
-  public void open() {
-    actorScheduler.submitActor(this).join();
+    purgePendingSnapshotsDirectory();
   }
 
   private FileBasedSnapshot loadLatestSnapshot(final Path snapshotDirectory) {
@@ -129,7 +121,7 @@ public final class FileBasedSnapshotStore extends Actor
     return null;
   }
 
-  void purgePendingSnapshotsDirectoryOnStartup() {
+  private void purgePendingSnapshotsDirectory() {
     try (final var files = Files.list(pendingDirectory)) {
       files.filter(Files::isDirectory).forEach(this::purgePendingSnapshot);
     } catch (final IOException e) {

@@ -320,15 +320,17 @@ public class FileBasedTransientSnapshotTest {
         persistedSnapshotStore.newTransientSnapshot(index, term, 1, 0).orElseThrow();
 
     // when
-    oldTransientSnapshot.take(
-        path -> {
-          try {
-            FileUtil.ensureDirectoryExists(path);
-          } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-          }
-          return false;
-        });
+    oldTransientSnapshot
+        .take(
+            path -> {
+              try {
+                FileUtil.ensureDirectoryExists(path);
+              } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+              }
+              return false;
+            })
+        .join();
 
     // then
     assertThat(pendingSnapshotsDir.toFile().listFiles()).isEmpty();
@@ -344,15 +346,20 @@ public class FileBasedTransientSnapshotTest {
         persistedSnapshotStore.newTransientSnapshot(index, term, 1, 0).orElseThrow();
 
     // when
-    oldTransientSnapshot.take(
-        path -> {
-          try {
-            FileUtil.ensureDirectoryExists(path);
-            throw new RuntimeException("EXPECTED");
-          } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        });
+    assertThatThrownBy(
+            () ->
+                oldTransientSnapshot
+                    .take(
+                        path -> {
+                          try {
+                            FileUtil.ensureDirectoryExists(path);
+                            throw new RuntimeException("EXPECTED");
+                          } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                          }
+                        })
+                    .join())
+        .hasCauseInstanceOf(RuntimeException.class);
 
     // then
     assertThat(pendingSnapshotsDir.toFile().listFiles()).isEmpty();
@@ -368,7 +375,7 @@ public class FileBasedTransientSnapshotTest {
     final var transientSnapshot =
         persistedSnapshotStore.newTransientSnapshot(index, term, 1, 0).orElseThrow();
     persistedSnapshotStore.addSnapshotListener(listener);
-    transientSnapshot.take(this::createSnapshotDir);
+    transientSnapshot.take(this::createSnapshotDir).join();
 
     // when
     final var persistedSnapshot = transientSnapshot.persist().join();
@@ -389,7 +396,7 @@ public class FileBasedTransientSnapshotTest {
         persistedSnapshotStore.newTransientSnapshot(index, term, 1, 0).orElseThrow();
     persistedSnapshotStore.addSnapshotListener(listener);
     persistedSnapshotStore.removeSnapshotListener(listener);
-    transientSnapshot.take(this::createSnapshotDir);
+    transientSnapshot.take(this::createSnapshotDir).join();
 
     // when
     final var persistedSnapshot = transientSnapshot.persist().join();
@@ -411,7 +418,7 @@ public class FileBasedTransientSnapshotTest {
         persistedSnapshotStore
             .newTransientSnapshot(index, term, processedPosition, exporterPosition)
             .orElseThrow();
-    transientSnapshot.take(this::createSnapshotDir);
+    transientSnapshot.take(this::createSnapshotDir).join();
     // when
     transientSnapshot.persist().join();
 
@@ -432,7 +439,7 @@ public class FileBasedTransientSnapshotTest {
         persistedSnapshotStore
             .newTransientSnapshot(index, term, processedPosition, exporterPosition)
             .orElseThrow();
-    transientSnapshot.take(this::createSnapshotDir);
+    transientSnapshot.take(this::createSnapshotDir).join();
 
     // when
     persistedSnapshotStore.purgePendingSnapshots().join();

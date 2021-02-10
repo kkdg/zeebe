@@ -133,7 +133,7 @@ public class ReceivedSnapshotTest {
   }
 
   @Test
-  public void shouldReturnFalseOnConsumingChunkTwice() throws Exception {
+  public void shouldReturnTrueOnConsumingChunkTwice() throws Exception {
     // given
     final var index = 1L;
     final var term = 0L;
@@ -153,9 +153,7 @@ public class ReceivedSnapshotTest {
 
     try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
       final var success = receivedSnapshot.apply(snapshotChunkReader.next()).join();
-
-      // then - TODO: Semantics have changed
-      //  assertThat(success).isFalse();
+      assertThat(success).isTrue();
     }
   }
 
@@ -225,90 +223,6 @@ public class ReceivedSnapshotTest {
     assertThat(persistedReceivedSnapshot).isEqualTo(alreadyPeristedSnapshot);
     assertThat(persistedReceivedSnapshot == alreadyPeristedSnapshot).isTrue();
   }
-
-  /*@Test
-  public void shouldCheckForExistingChunk() throws Exception {
-    // given
-    final var index = 1L;
-    final var term = 0L;
-    final var time = WallClockTimestamp.from(123);
-    final var transientSnapshot = senderSnapshotStore.newTransientSnapshot(index, term, 1, 0).get();
-    transientSnapshot.take(
-        p -> takeSnapshot(p, List.of("file3", "file1", "file2"), List.of("content", "this", "is")));
-    final var persistedSnapshot = transientSnapshot.persist().join();
-
-    // when
-    final var receivedSnapshot =
-        receiverSnapshotStore.newReceivedSnapshot(persistedSnapshot.getId());
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      while (snapshotChunkReader.hasNext()) {
-        receivedSnapshot.apply(snapshotChunkReader.next());
-      }
-    }
-
-    // then
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      while (snapshotChunkReader.hasNext()) {
-        assertThat(receivedSnapshot.containsChunk(snapshotChunkReader.nextId())).isTrue();
-        snapshotChunkReader.next();
-      }
-    }
-  }*/
-
-  /* @Test
-  public void shouldNotExistChunkWithDifferentReceivingSnapshot() throws Exception {
-    // given
-    final var index = 1L;
-    final var term = 0L;
-    final var time = WallClockTimestamp.from(123);
-    final var transientSnapshot = senderSnapshotStore.newTransientSnapshot(index, term, 1, 0).get();
-    transientSnapshot.take(
-        p -> takeSnapshot(p, List.of("file3", "file1", "file2"), List.of("content", "this", "is")));
-    final var persistedSnapshot = transientSnapshot.persist().join();
-
-    // when
-    final var receivedSnapshot =
-        receiverSnapshotStore.newReceivedSnapshot(persistedSnapshot.getId());
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      while (snapshotChunkReader.hasNext()) {
-        receivedSnapshot.apply(snapshotChunkReader.next());
-      }
-    }
-
-    // then
-    final var otherReceivingSnapshot =
-        receiverSnapshotStore.newReceivedSnapshot(persistedSnapshot.getId());
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      while (snapshotChunkReader.hasNext()) {
-        assertThat(otherReceivingSnapshot.containsChunk(snapshotChunkReader.nextId())).isFalse();
-        snapshotChunkReader.next();
-      }
-    }
-  }*/
-
-  /* @Test
-  public void shouldCheckForNextChunk() {
-    // given
-    final var index = 1L;
-    final var term = 0L;
-    final var time = WallClockTimestamp.from(123);
-    final var transientSnapshot = senderSnapshotStore.newTransientSnapshot(index, term, 1, 0).get();
-    transientSnapshot.take(
-        p -> takeSnapshot(p, List.of("file3", "file1", "file2"), List.of("content", "this", "is")));
-    final var persistedSnapshot = transientSnapshot.persist().join();
-
-    // when
-    final var receivedSnapshot =
-        receiverSnapshotStore.newReceivedSnapshot(persistedSnapshot.getId());
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      receivedSnapshot.setNextExpected(snapshotChunkReader.nextId());
-    }
-
-    // then
-    try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
-      assertThat(receivedSnapshot.isExpectedChunk(snapshotChunkReader.nextId())).isTrue();
-    }
-  }*/
 
   @Test
   public void shouldThrowExceptionOnPersistWhenNoChunkApplied() {
