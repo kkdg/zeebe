@@ -166,6 +166,13 @@ public class RaftContext implements AutoCloseable {
     persistedSnapshotStore
         .getLatestSnapshot()
         .ifPresent(persistedSnapshot -> currentSnapshot = persistedSnapshot);
+    if ((currentSnapshot == null && logReader.getFirstIndex() != 1)
+        || (currentSnapshot.getIndex() < logReader.getFirstIndex())) {
+      // There is no snapshot, but the log has been compacted!
+      throw new IllegalStateException(
+          String.format(
+              "Expected to find a snapshot >= log's first index {}", logReader.getFirstIndex()));
+    }
 
     logCompactor = new LogCompactor(this);
 

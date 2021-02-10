@@ -65,6 +65,9 @@ public final class FileBasedTransientSnapshot implements TransientSnapshot {
         isValid = takeSnapshot.test(getPath());
         if (!isValid) {
           abortInternal();
+        } else {
+          final var checksum = SnapshotChecksum.calculate(directory);
+          SnapshotChecksum.persist(directory, checksum);
         }
         takenFuture.complete(isValid);
       } catch (final Exception exception) {

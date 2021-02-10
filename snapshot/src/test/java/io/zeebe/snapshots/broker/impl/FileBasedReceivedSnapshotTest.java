@@ -25,6 +25,7 @@ import io.zeebe.util.FileUtil;
 import io.zeebe.util.sched.ActorScheduler;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -508,19 +509,22 @@ public class FileBasedReceivedSnapshotTest {
     transientSnapshot.take(
         p -> takeSnapshot(p, List.of("file3", "file1", "file2"), List.of("content", "this", "is")));
     final var persistedSnapshot = transientSnapshot.persist().join();
+
+    corruptSnapshot(persistedSnapshot, "file3");
+
+    // when
     final var receivedSnapshot =
         receiverSnapshotStore.newReceivedSnapshot(persistedSnapshot.getId());
     try (final var snapshotChunkReader = persistedSnapshot.newChunkReader()) {
       while (snapshotChunkReader.hasNext()) {
-        receivedSnapshot.apply(
-            SnapshotChunkWrapper.withDifferentSnapshotChecksum(
-                snapshotChunkReader.next(), 0xCAFEL));
+        receivedSnapshot.apply(snapshotChunkReader.next());
       }
     }
 
-    // when - then
+    // then
     assertThatThrownBy(() -> receivedSnapshot.persist().join())
-        .hasCauseInstanceOf(IllegalStateException.class);
+        .hasCauseInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Snapshot is corrupted");
   }
 
   @Test
@@ -653,5 +657,14 @@ public class FileBasedReceivedSnapshotTest {
       throw new UncheckedIOException(e);
     }
     return true;
+  }
+
+  private void corruptSnapshot(
+      final PersistedSnapshot persistedSnapshot, final String corruptedFileName)
+      throws IOException {
+    final var file = persistedSnapshot.getPath().resolve(corruptedFileName).toFile();
+    try (final RandomAccessFile corruptedFile = new RandomAccessFile(file, "rw")) {
+      corruptedFile.writeLong(123456L);
+    }
   }
 }

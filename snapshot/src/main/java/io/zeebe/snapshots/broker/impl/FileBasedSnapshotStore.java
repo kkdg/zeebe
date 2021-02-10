@@ -110,11 +110,13 @@ public final class FileBasedSnapshotStore extends Actor
     return latestPersistedSnapshot;
   }
 
-  private FileBasedSnapshot collectSnapshot(final Path path) {
+  private FileBasedSnapshot collectSnapshot(final Path path) throws IOException {
     final var optionalMeta = FileBasedSnapshotMetadata.ofPath(path);
     if (optionalMeta.isPresent()) {
       final var metadata = optionalMeta.get();
-      return new FileBasedSnapshot(path, metadata);
+      if (SnapshotChecksum.verify(path)) {
+        return new FileBasedSnapshot(path, metadata);
+      }
     } else {
       LOGGER.warn("Expected snapshot file format to be %d-%d-%d-%d, but was {}", path);
     }
