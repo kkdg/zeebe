@@ -490,7 +490,7 @@
 
         # Enables RocksDB statistics, which will be written to the RocksDB log file.
         # This setting can also be set using the environment variable ZEEBE_BROKER_EXPERIMENTAL_ROCKSDB_ENABLESTATISTICS
-        # disableStatistics: false
+        # enableStatistics: false
 
         # Configures the memory limit, which can be used by RocksDB. Be aware that this setting only applies to RocksDB, which is used by the Zeebe's state management and that
         # an RocksDB instance is used per partition.
