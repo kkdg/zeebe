@@ -17,14 +17,14 @@ import org.springframework.util.unit.DataSize;
 public final class RocksdbCfg implements ConfigurationEntry {
 
   private Properties columnFamilyOptions;
-  private boolean statisticsEnabled = RocksDbConfiguration.DEFAULT_STATISTICS_ENABLED;
+  private boolean enableStatistics = RocksDbConfiguration.DEFAULT_STATISTICS_ENABLED;
   private DataSize memoryLimit = DataSize.ofBytes(RocksDbConfiguration.DEFAULT_MEMORY_LIMIT);
   private int maxOpenFiles = RocksDbConfiguration.DEFAULT_UNLIMITED_MAX_OPEN_FILES;
   private int maxWriteBufferNumber = RocksDbConfiguration.DEFAULT_MAX_WRITE_BUFFER_NUMBER;
   private int minWriteBufferNumberToMerge =
       RocksDbConfiguration.DEFAULT_MIN_WRITE_BUFFER_NUMBER_TO_MERGE;
   private int ioRateBytesPerSecond = RocksDbConfiguration.DEFAULT_IO_RATE_BYTES_PER_SECOND;
-  private boolean walDisabled = RocksDbConfiguration.DEFAULT_WAL_DISABLED;
+  private boolean disableWal = RocksDbConfiguration.DEFAULT_WAL_DISABLED;
 
   @Override
   public void init(final BrokerCfg globalConfig, final String brokerBase) {
@@ -54,12 +54,12 @@ public final class RocksdbCfg implements ConfigurationEntry {
     this.columnFamilyOptions = columnFamilyOptions;
   }
 
-  public boolean isStatisticsEnabled() {
-    return statisticsEnabled;
+  public boolean isEnableStatistics() {
+    return enableStatistics;
   }
 
-  public void setStatisticsEnabled(final boolean statisticsEnabled) {
-    this.statisticsEnabled = statisticsEnabled;
+  public void setEnableStatistics(final boolean enableStatistics) {
+    this.enableStatistics = enableStatistics;
   }
 
   public DataSize getMemoryLimit() {
@@ -102,12 +102,12 @@ public final class RocksdbCfg implements ConfigurationEntry {
     this.ioRateBytesPerSecond = ioRateBytesPerSecond;
   }
 
-  public boolean isWalDisabled() {
-    return walDisabled;
+  public boolean isDisableWal() {
+    return disableWal;
   }
 
-  public void setWalDisabled(final boolean walDisabled) {
-    this.walDisabled = walDisabled;
+  public void setDisableWal(final boolean disableWal) {
+    this.disableWal = disableWal;
   }
 
   public RocksDbConfiguration createRocksDbConfiguration() {
@@ -117,9 +117,9 @@ public final class RocksdbCfg implements ConfigurationEntry {
         .setMaxWriteBufferNumber(maxWriteBufferNumber)
         .setMemoryLimit(memoryLimit.toBytes())
         .setMinWriteBufferNumberToMerge(minWriteBufferNumberToMerge)
-        .setStatisticsEnabled(statisticsEnabled)
+        .setStatisticsEnabled(enableStatistics)
         .setIoRateBytesPerSecond(ioRateBytesPerSecond)
-        .setWalDisabled(walDisabled);
+        .setWalDisabled(disableWal);
   }
 
   @Override
@@ -127,8 +127,8 @@ public final class RocksdbCfg implements ConfigurationEntry {
     return "RocksdbCfg{"
         + "columnFamilyOptions="
         + columnFamilyOptions
-        + ", statisticsEnabled="
-        + statisticsEnabled
+        + ", enableStatistics="
+        + enableStatistics
         + ", memoryLimit="
         + memoryLimit
         + ", maxOpenFiles="
@@ -139,8 +139,8 @@ public final class RocksdbCfg implements ConfigurationEntry {
         + minWriteBufferNumberToMerge
         + ", ioRateBytesPerSecond="
         + ioRateBytesPerSecond
-        + ", walDisabled="
-        + walDisabled
+        + ", disableWal="
+        + disableWal
         + '}';
   }
 

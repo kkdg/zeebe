@@ -9,7 +9,6 @@ package io.zeebe.broker.system.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.zeebe.db.impl.rocksdb.RocksDbConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -26,7 +25,7 @@ public final class RocksdbCfgTest {
     final var rocksdb = cfg.getExperimental().getRocksdb();
 
     // then
-    assertThat(rocksdb.isStatisticsEnabled()).isFalse();
+    assertThat(rocksdb.isEnableStatistics()).isFalse();
   }
 
   @Test
@@ -72,15 +71,11 @@ public final class RocksdbCfgTest {
     assertThat(rocksDbConfiguration.getColumnFamilyOptions()).isEmpty();
     assertThat(rocksDbConfiguration.isStatisticsEnabled()).isFalse();
     assertThat(rocksDbConfiguration.getMemoryLimit())
-        .isEqualTo(RocksDbConfiguration.DEFAULT_MEMORY_LIMIT);
-    assertThat(rocksDbConfiguration.getMaxOpenFiles())
-        .isEqualTo(RocksDbConfiguration.DEFAULT_UNLIMITED_MAX_OPEN_FILES);
-    assertThat(rocksDbConfiguration.getMaxWriteBufferNumber())
-        .isEqualTo(RocksDbConfiguration.DEFAULT_MAX_WRITE_BUFFER_NUMBER);
-    assertThat(rocksDbConfiguration.getMinWriteBufferNumberToMerge())
-        .isEqualTo(RocksDbConfiguration.DEFAULT_MIN_WRITE_BUFFER_NUMBER_TO_MERGE);
-    assertThat(rocksDbConfiguration.getIoRateBytesPerSecond())
-        .isEqualTo(RocksDbConfiguration.DEFAULT_IO_RATE_BYTES_PER_SECOND);
+        .isEqualTo(DataSize.ofMegabytes(512).toBytes());
+    assertThat(rocksDbConfiguration.getMaxOpenFiles()).isEqualTo(-1);
+    assertThat(rocksDbConfiguration.getMaxWriteBufferNumber()).isEqualTo(6);
+    assertThat(rocksDbConfiguration.getMinWriteBufferNumberToMerge()).isEqualTo(3);
+    assertThat(rocksDbConfiguration.getIoRateBytesPerSecond()).isZero();
     assertThat(rocksDbConfiguration.isWalDisabled()).isFalse();
   }
 
@@ -122,7 +117,7 @@ public final class RocksdbCfgTest {
     final var rocksdb = cfg.getExperimental().getRocksdb();
 
     // then
-    assertThat(rocksdb.isStatisticsEnabled()).isTrue();
+    assertThat(rocksdb.isEnableStatistics()).isTrue();
   }
 
   @Test
@@ -163,14 +158,14 @@ public final class RocksdbCfgTest {
   @Test
   public void shouldEnableStatisticsViaEnvironmentVariables() {
     // given
-    environment.put("zeebe.broker.experimental.rocksdb.statisticsEnabled", "true");
+    environment.put("zeebe.broker.experimental.rocksdb.enableStatistics", "true");
 
     // when
     final BrokerCfg cfg = TestConfigReader.readConfig("rocksdb-cfg", environment);
     final var rocksdb = cfg.getExperimental().getRocksdb();
 
     // then
-    assertThat(rocksdb.isStatisticsEnabled()).isTrue();
+    assertThat(rocksdb.isEnableStatistics()).isTrue();
   }
 
   @Test
@@ -269,25 +264,25 @@ public final class RocksdbCfgTest {
   }
 
   @Test
-  public void shouldSetIsWalDisabledPerSecondViaConfig() {
+  public void shouldSetIsDisableWalPerSecondViaConfig() {
     // when
     final BrokerCfg cfg = TestConfigReader.readConfig("rocksdb-cfg", environment);
     final var rocksdb = cfg.getExperimental().getRocksdb();
 
     // then
-    assertThat(rocksdb.isWalDisabled()).isTrue();
+    assertThat(rocksdb.isDisableWal()).isTrue();
   }
 
   @Test
-  public void shouldSetIsWalDisabledViaEnvironmentVariables() {
+  public void shouldSetIsDisableWalViaEnvironmentVariables() {
     // given
-    environment.put("zeebe.broker.experimental.rocksdb.walDisabled", "true");
+    environment.put("zeebe.broker.experimental.rocksdb.disableWal", "true");
 
     // when
     final BrokerCfg cfg = TestConfigReader.readConfig("rocksdb-cfg", environment);
     final var rocksdb = cfg.getExperimental().getRocksdb();
 
     // then
-    assertThat(rocksdb.isWalDisabled()).isTrue();
+    assertThat(rocksdb.isDisableWal()).isTrue();
   }
 }
